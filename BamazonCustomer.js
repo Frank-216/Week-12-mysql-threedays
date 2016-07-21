@@ -1,6 +1,9 @@
 // require mysql 
 var mysql = require('mysql');
-
+// require console.table to easily print table to the console. 
+var consoleTable = require('console.table');
+// Require Inquirer
+var inquirer = require('inquirer');
 // set up connection 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -30,6 +33,6 @@ connection.connect(function(err) {
 
 
 // query to display ID, Item, Price 
-connection.query('SELECT * FROM Products', function(err, res){
+connection.query('SELECT ItemID,ProductName,Price FROM Products', function(err, res){
     console.log(res);
 });
