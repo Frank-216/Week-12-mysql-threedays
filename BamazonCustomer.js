@@ -22,41 +22,9 @@ connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
 })
-// The function below can be used to enter values into the database.   
-// Items can also be added via the workbench
 
-// connection.query("INSERT INTO Products SET ?", {
-//     // Ask if I need to update the idem that is Auto Incremented
-//     ItemID: ,
-//     ProductName: "Alienware 15inch",
-//     DepartmentName:"Computers",
-//     Price:1399.99,
-//     StockQuantity:1000w
-// }, function(err, res) {
-//     console.log(res);
-// });
 
-console.log("Welcome to Bamazon Below are the items for sale!");
-console.log("");
-// query to display ID, Item, Price 
-// COnsole table to display the items in the table 
-
-var callInquirer = function(){
-	inquirer.prompt([{
-        	type: 'input',
-        	name: 'amount',
-        	message: "Select number of items you would: "
-	}]).then(function(val){
-		number = val.amount;
-        console.log(number + " in function");
-		return number;
-	})
-};
-
-var quanityCheck = function(){
-
-};
-
+// prompt customer to see what items they want to purchase 
 var promptCustomer = function() {
         //PROMPTS USER FOR WHAT THEY WOULD LIKE TO PURCHASE//
         inquirer.prompt([{
@@ -73,11 +41,11 @@ var promptCustomer = function() {
                 var correct = false;
                 var i;
                 //LOOPS THROUGH THE MYSQL TABLE TO CHECK THAT THE PRODUCT THEY WANTED EXISTS//
-                for(i = 0; i < queryItems.length; i++){
-                	// console.log(queryItems[i]);
-                	if(i == chosenNumber){
-                		console.log(true)
-                		var numberCall = inquirer.prompt([{
+                if(chosenNumber < queryItems.length){
+                    for(i = 0; i < queryItems.length; i++){
+                    // console.log(queryItems[i]);
+                    if(i == chosenNumber){
+                        var numberCall = inquirer.prompt([{
                                 type: 'input',
                                 name: 'amount',
                                 message: "Select number of items you would: "
@@ -87,10 +55,9 @@ var promptCustomer = function() {
                             connection.query("SELECT StockQuantity FROM Products WHERE ItemID = "+ chosenNumber,function(err, res){
                                 // res[0].StockQuantity 
                                 //update chosenNumber to be able to access the array easily
-                                chosenNumber = chosenNumber-1;
-                                console.log(chosenNumber);
+                                var arrayLocate = chosenNumber-1;
                                 // grab product name 
-                                var name = queryItems[chosenNumber].ProductName;
+                                var name = queryItems[arrayLocate].ProductName;
                                 // grab stock amount
                                 var stock = res[0].StockQuantity;
                                 // subtract requested amount from stock quantity
@@ -98,48 +65,48 @@ var promptCustomer = function() {
                                 // if statement.  If stock is still greater than 0 update database and display console.log that purchase was succesful
                                 if(stock > 0){
                                     console.log("Successful Purchase! You have purchased "+ number + " " + name);
+                                    // update the datebase 
+                                    connection.query("UPDATE Products SET StockQuantity = "+stock +" WHERE ItemID ="+chosenNumber, function(err, res){  
+                                    })
+                                    queryCall();
+                                }else{
+                                    console.log("Not enough stock of "+ name + " exists.  please try again");
+                                    queryCall();
                                 }
                             });
                           })
 
-                        }              		
-                    }
-                    // SELCT StockQuanity FROM Product WHERE ItemID = number
-                
-	                //1. TODO: IF THE PRODUCT EXISTS, SET correct = true and ASK THE USER TO SEE HOW MANY OF THE PRODUCT THEY WOULD LIKE TO BUY//
-	               	//2. TODO: CHECK TO SEE IF THE AMOUNT REQUESTED IS LESS THAN THE AMOUNT THAT IS AVAILABLE//                       
-	                //3. TODO: UPDATE THE MYSQL TO REDUCE THE StockQuanaity by the THE AMOUNT REQUESTED  - UPDATE COMMAND!
-	                //4. TODO: SHOW THE TABLE again by calling the function that makes the table
-                
-
-                //IF THE PRODUCT REQUESTED DOES NOT EXIST, RESTARTS PROMPT//
-                if (chosenNumber > res.length ) {
-                    console.log(" You did not choose a value that exists! Please choose a value that exists")
-                    promptCustomer();
+                        }// close if statment 
+                        
+                    }// close for loop  
+                }else{
+                    console.log("You did not choose a value that is accurate.  Try again");
+                    console.log("")
+                    console.log("========================================================")
+                    queryCall();
                 }
-            });
-}
+                
+                                  		
+                    });// close then statement 
+}// close promptCustomer
+
 // display table of items
 var queryCall = function(){
 	connection.query('SELECT ItemID,ProductName,Price FROM Products', function(err, res){
-    console.table(res);
-    console.log(res.length + " length");
-    for(var i = 0; i < res.length; i++){
-    	queryItems.push(res[i]);
-    }
-    return res;
-	});
+        console.log("Welcome to Bamazon Below are the items for sale!");
+        console.log("");
+        console.log("=================================================");
+        // display tables 
+        console.table(res);
+        for(var i = 0; i < res.length; i++){
+    	   queryItems.push(res[i]);
+        }
+         return res;
+	   });
+    // call the prompt item 
     promptCustomer();
 };
-// add all productNames to an array DID NOT NEED THIS PIECE OF CODE 
-// connection.query('SELECT * FROM Products', function(err, res){
-// 	    for (var i = 0; i < res.length; i++){
-// 	    	array.push(res[i].ProductName);
-// 	    }
-// 	    console.log(array);
-// });
+// Launch query table 
 queryCall();
-console.log()
 
-// Call promptCustomers
-// promptCustomer();
+
