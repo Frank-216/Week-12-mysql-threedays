@@ -8,7 +8,7 @@ var inquirer = require('inquirer');
 var array = [];
 var checkString ='';
 var queryItems =[];
-
+var number;
 // set up connection 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -31,7 +31,7 @@ connection.connect(function(err) {
 //     ProductName: "Alienware 15inch",
 //     DepartmentName:"Computers",
 //     Price:1399.99,
-//     StockQuantity:1000
+//     StockQuantity:1000w
 // }, function(err, res) {
 //     console.log(res);
 // });
@@ -47,12 +47,17 @@ var callInquirer = function(){
         	name: 'amount',
         	message: "Select number of items you would: "
 	}]).then(function(val){
-		var number = val.amount;
-		console.log(number);
+		number = val.amount;
+        console.log(number + " in function");
 		return number;
 	})
-}
-var promptCustomer = function(res) {
+};
+
+var quanityCheck = function(){
+
+};
+
+var promptCustomer = function() {
         //PROMPTS USER FOR WHAT THEY WOULD LIKE TO PURCHASE//
         inquirer.prompt([{
             type: 'input',
@@ -60,24 +65,47 @@ var promptCustomer = function(res) {
             message: 'Please select the product ID of the proudct you like to purchase?'
         }]).then(function(val) {
         				console.log(val.choice);
-        				var chosenNumber = val.choice;
-        				console.log(chosenNumber);
+        				var chosenstring= val.choice;
+        				var chosenNumber = parseInt(chosenstring);
+                        console.log(typeof chosenNumber);
         				// for (var i = 0; i < )
                 //SET THE VAR correct TO FALSE SO AS TO MAKE SURE THE USER INPUTS A VALID PRODUCT NAME//
                 var correct = false;
-                
+                var i;
                 //LOOPS THROUGH THE MYSQL TABLE TO CHECK THAT THE PRODUCT THEY WANTED EXISTS//
-                for(var i = 0; i < queryItems.length; i++){
+                for(i = 0; i < queryItems.length; i++){
                 	// console.log(queryItems[i]);
-                	console.log(false);
                 	if(i == chosenNumber){
                 		console.log(true)
-                		var numberCall = callInquirer();
-                		console.log(numberCall);                		}
-                }
-                if(numberOfItems <= queryItems.length){
-                	console.log(true)
-                }
+                		var numberCall = inquirer.prompt([{
+                                type: 'input',
+                                name: 'amount',
+                                message: "Select number of items you would: "
+                         }]).then(function(val){
+                            number = val.amount;
+                            console.log(number + " in function");
+                            connection.query("SELECT StockQuantity FROM Products WHERE ItemID = "+ chosenNumber,function(err, res){
+                                // res[0].StockQuantity 
+                                //update chosenNumber to be able to access the array easily
+                                chosenNumber = chosenNumber-1;
+                                console.log(chosenNumber);
+                                // grab product name 
+                                var name = queryItems[chosenNumber].ProductName;
+                                // grab stock amount
+                                var stock = res[0].StockQuantity;
+                                // subtract requested amount from stock quantity
+                                stock = stock - number;
+                                // if statement.  If stock is still greater than 0 update database and display console.log that purchase was succesful
+                                if(stock > 0){
+                                    console.log("Successful Purchase! You have purchased "+ number + " " + name);
+                                }
+                            });
+                          })
+
+                        }              		
+                    }
+                    // SELCT StockQuanity FROM Product WHERE ItemID = number
+                
 	                //1. TODO: IF THE PRODUCT EXISTS, SET correct = true and ASK THE USER TO SEE HOW MANY OF THE PRODUCT THEY WOULD LIKE TO BUY//
 	               	//2. TODO: CHECK TO SEE IF THE AMOUNT REQUESTED IS LESS THAN THE AMOUNT THAT IS AVAILABLE//                       
 	                //3. TODO: UPDATE THE MYSQL TO REDUCE THE StockQuanaity by the THE AMOUNT REQUESTED  - UPDATE COMMAND!
@@ -85,8 +113,9 @@ var promptCustomer = function(res) {
                 
 
                 //IF THE PRODUCT REQUESTED DOES NOT EXIST, RESTARTS PROMPT//
-                if (i == res.length && correct == false) {
-                    promptCustomer(res);
+                if (chosenNumber > res.length ) {
+                    console.log(" You did not choose a value that exists! Please choose a value that exists")
+                    promptCustomer();
                 }
             });
 }
@@ -98,17 +127,19 @@ var queryCall = function(){
     for(var i = 0; i < res.length; i++){
     	queryItems.push(res[i]);
     }
-    return queryItems;
+    return res;
 	});
+    promptCustomer();
 };
 // add all productNames to an array DID NOT NEED THIS PIECE OF CODE 
-// connection.query('SELECT ProductName FROM Products', function(err, res){
+// connection.query('SELECT * FROM Products', function(err, res){
 // 	    for (var i = 0; i < res.length; i++){
 // 	    	array.push(res[i].ProductName);
 // 	    }
 // 	    console.log(array);
 // });
 queryCall();
-console.log(queryItems.length);
+console.log()
+
 // Call promptCustomers
-promptCustomer();
+// promptCustomer();
